@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GiziCheck — Kalkulator Z-Score Gizi Anak</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #ffffff;
+    --black: #0f1117;
+    --gray-50: #f8f9fb;
+    --gray-100: #f0f2f5;
+    --gray-200: #e2e6ec;
+    --gray-400: #9aa3b0;
+    --gray-600: #5a6475;
+    --blue-50: #eef4ff;
+    --blue-100: #d4e4ff;
+    --blue-500: #2563eb;
+    --blue-600: #1d4ed8;
+    --blue-700: #1e3a8a;
+    --red-50: #fff1f1;
+    --red-400: #f87171;
+    --red-600: #dc2626;
+    --red-700: #991b1b;
+    --green-50: #f0fdf4;
+    --green-400: #4ade80;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --yellow-50: #fefce8;
+    --yellow-400: #facc15;
+    --yellow-600: #ca8a04;
+    --yellow-700: #854d0e;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06);
+    --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-50);
+    color: var(--black);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── BACKGROUND DECORATION ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #d4e4ff 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #dcfce7 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .app-wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+    padding: 2rem 2rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 20px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+
+  .header-icon {
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 26px;
+    position: relative; z-index: 1;
+  }
+
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--white);
+    line-height: 1.2;
+    position: relative; z-index: 1;
+  }
+
+  .header-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 4px;
+    position: relative; z-index: 1;
+    font-weight: 300;
+  }
+
+  .card-body { padding: 2rem; }
+
+  /* ── STEP PROGRESS ── */
+  .step-bar {
+    display: flex; align-items: center; gap: 0; margin-bottom: 1.75rem;
+  }
+  .step-item {
+    display: flex; align-items: center; flex: 1;
+  }
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .step-circle.done    { background: var(--blue-500); color: #fff; }
+  .step-circle.active  { background: var(--blue-50); border: 2px solid var(--blue-500); color: var(--blue-600); }
+  .step-circle.pending { background: var(--gray-100); color: var(--gray-400); }
+  .step-line {
+    flex: 1; height: 2px; background: var(--gray-200);
+    margin: 0 4px; transition: var(--transition);
+  }
+  .step-line.done { background: var(--blue-500); }
+  .step-label-row {
+    display: flex; justify-content: space-between; margin-bottom: 1.5rem; margin-top: -1rem;
+  }
+  .step-lbl {
+    font-size: 11px; color: var(--gray-400); flex: 1; text-align: center;
+  }
+  .step-lbl.active { color: var(--blue-600); font-weight: 500; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.25s ease both; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── HOME SCREEN ── */
+  .home-hero {
+    text-align: center; padding: 1rem 0 1.5rem;
+  }
+  .home-big-icon {
+    width: 80px; height: 80px;
+    background: var(--blue-50);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 38px;
+  }
+  .home-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px; color: var(--black); margin-bottom: 0.5rem;
+  }
+  .home-desc {
+    font-size: 14px; color: var(--gray-600); line-height: 1.7; margin-bottom: 1.5rem;
+  }
+
+  .feature-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 1.75rem;
+  }
+  .feature-chip {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--gray-600);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .feature-chip .chip-icon { font-size: 16px; }
+
+  /* ── FORM ── */
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--gray-400);
+    margin-bottom: 1rem;
+  }
+
+  .field { margin-bottom: 1.1rem; }
+  .field label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--gray-600); margin-bottom: 5px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--black);
+    background: var(--white);
+    transition: var(--transition);
+    outline: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .field input::placeholder { color: var(--gray-400); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .age-display {
+    padding: 10px 14px;
+    background: var(--blue-50);
+    border: 1.5px solid var(--blue-100);
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500;
+    color: var(--blue-700);
+    min-height: 42px; display: flex; align-items: center;
+  }
+  .age-display.placeholder { color: var(--gray-400); font-weight: 400; font-style: italic; }
+
+  .info-box {
+    background: var(--blue-50); border: 1px solid var(--blue-100);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    font-size: 12px; color: var(--blue-700); line-height: 1.6;
+    margin-bottom: 1rem;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .info-box .info-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .error-msg {
+    display: none; font-size: 12px; color: var(--red-600);
+    background: var(--red-50); border-radius: var(--radius-sm);
+    padding: 8px 12px; margin-bottom: 1rem;
+    border-left: 3px solid var(--red-400);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 12px 20px;
+    border: none; border-radius: var(--radius-md);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: var(--transition);
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--blue-500); color: var(--white);
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+  }
+  .btn-primary:hover { background: var(--blue-600); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-outline {
+    background: transparent; color: var(--gray-600);
+    border: 1.5px solid var(--gray-200);
+    margin-top: 10px;
+  }
+  .btn-outline:hover { background: var(--gray-50); border-color: var(--gray-400); }
+
+  /* ── RESULT CARDS ── */
+  .result-intro {
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 1.25rem;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .result-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--blue-50);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .result-name { font-size: 15px; font-weight: 600; color: var(--black); }
+  .result-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+  .result-grid {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .result-card {
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--gray-200);
+    padding: 14px 16px;
+    transition: var(--transition);
+    background: var(--white);
+  }
+  .result-card:hover { box-shadow: var(--shadow-sm); }
+
+  .rc-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .rc-indicator {
+    font-size: 12px; font-weight: 600; color: var(--gray-400);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .rc-zscore {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; line-height: 1; color: var(--black);
+  }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 500;
+  }
+  .status-pill::before { content: '●'; font-size: 8px; }
+
+  .pill-red    { background: var(--red-50);    color: var(--red-700); }
+  .pill-green  { background: var(--green-50);  color: var(--green-700); }
+  .pill-yellow { background: var(--yellow-50); color: var(--yellow-700); }
+
+  .rc-status-row { display: flex; align-items: center; justify-content: space-between; }
+  .rc-full-label { font-size: 13px; color: var(--gray-600); }
+
+  .disclaimer {
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 12px; color: var(--gray-600);
+    line-height: 1.6; margin-bottom: 1.25rem;
+    border-left: 3px solid var(--gray-200);
+  }
+
+  /* ── FOOTER ── */
+  .app-footer {
+    margin-top: 1.5rem;
+    font-size: 12px; color: var(--gray-400); text-align: center;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .card-body { padding: 1.5rem; }
+    .card-header { padding: 1.5rem 1.5rem 1.25rem; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .row2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+  <div class="card">
+    <!-- HEADER -->
+    <div class="card-header">
+      <div class="header-icon">⚕️</div>
+      <div class="header-title">GiziCheck</div>
+      <div class="header-subtitle">Kalkulator Z-Score Status Gizi Anak — Standar WHO</div>
+    </div>
+
+    <div class="card-body">
+
+      <!-- ══════════════════════════════════════ -->
+      <!-- SCREEN 1: HOME                        -->
+      <!-- ══════════════════════════════════════ -->
+      <div class="screen active" id="screen-home">
+        <div class="home-hero">
+          <div class="home-big-icon">👶</div>
+          <div class="home-title">Deteksi Masalah Gizi Balita</div>
+          <p class="home-desc">
+            Masukkan data anak untuk menghitung z-score dan mendeteksi kondisi gizi secara otomatis berdasarkan standar pertumbuhan WHO.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-chip"><span class="chip-icon">📉</span> Stunting (PB/TB)</div>
+          <div class="feature-chip"><span class="chip-icon">⚖️</span> Wasting (BB/PB)</div>
+          <div class="feature-chip"><span class="chip-icon">🔻</span> Underweight (BB/U)</div>
+          <div class="feature-chip"><span class="chip-icon">🔺</span> Overweight (IMT/U)</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="goTo('input1')">
+          <span>▶</span> Mulai Pemeriksaan
+        </button>
+        <p style="text-align:center; font-size:12px; color:var(--gray-400); margin-top:1rem;">
+          Untuk orang tua balita, kader posyandu, dan tenaga kesehatan
+        </p>
+      </div>
+
+      <!-- ══════════════════════════════════════ -->
+      <!-- SCREEN 2: INPUT PROFIL                -->
+      <!-- ══════════════════════════════════════ -->
+      <div class="screen" id="screen-input1">
+        <!-- Step Bar -->
+        <div class="step-bar">
+          <div class="step-circle active" id="sc1">1</div>
+          <div class="step-line" id="sl1"></div>
+          <div class="step-circle pending" id="sc2">2</div>
+        </div>
+        <div class="step-label-row">
+          <span class="step-lbl active">Profil Anak</span>
+          <span class="step-lbl" id="lbl2">Pemeriksaan</span>
+        </div>
+
+        <div class="section-label">Data Profil</div>
+
+        <div class="field">
+          <label for="nama">Nama Anak</label>
+          <input type="text" id="nama" placeholder="Nama lengkap anak">
+        </div>
+        <div class="field">
+          <label for="tgl_lahir">Tanggal Lahir</label>
+          <input type="date" id="tgl_lahir" onchange="hitungUsia()">
+        </div>
+        <div class="field">
+          <label for="tgl_periksa">Tanggal Pemeriksaan</label>
+          <input type="date" id="tgl_periksa" onchange="hitungUsia()">
+        </div>
+        <div class="field">
+          <label>Usia (dihitung otomatis)</label>
+          <div class="age-display placeholder" id="usia-display">Isi tanggal lahir dan pemeriksaan...</div>
+        </div>
+        <div class="field">
+          <label for="jk">Jenis Kelamin</label>
+          <select id="jk">
+            <option value="">— Pilih jenis kelamin —</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+          </select>
+        </div>
+
+        <div class="error-msg" id="err1">⚠ Harap lengkapi seluruh data profil anak.</div>
+
+        <button class="btn btn-primary" onclick="nextStep1()">
+          Selanjutnya <span>→</span>
+        </button>
+        <button class="btn btn-outline" onclick="goTo('screen-home')">← Kembali</button>
+      </div>
+
+      <!-- ══════════════════════════════════════ -->
+      <!-- SCREEN 3: INPUT PEMERIKSAAN           -->
+      <!-- ══════════════════════════════════════ -->
+      <div class="screen" id="screen-input2">
+        <!-- Step Bar -->
+        <div class="step-bar">
+          <div class="step-circle done">✓</div>
+          <div class="step-line done"></div>
+          <div class="step-circle active">2</div>
+        </div>
+        <div class="step-label-row">
+          <span class="step-lbl">Profil Anak</span>
+          <span class="step-lbl active">Pemeriksaan</span>
+        </div>
+
+        <div class="section-label">Hasil Pemeriksaan Antropometri</div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="bb">Berat Badan (kg)</label>
+            <input type="number" id="bb" placeholder="mis. 12.5" step="0.1" min="1" max="35">
+          </div>
+          <div class="field">
+            <label for="tb" id="label-tb">Panjang Badan (cm)</label>
+            <input type="number" id="tb" placeholder="mis. 85.0" step="0.1" min="40" max="130">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="posisi">Posisi Pengukuran Panjang/Tinggi Badan</label>
+          <select id="posisi" onchange="updateTBLabel()">
+            <option value="berbaring">Berbaring — Panjang Badan (PB)</option>
+            <option value="berdiri">Berdiri — Tinggi Badan (TB)</option>
+          </select>
+        </div>
+
+        <div class="info-box">
+          <span class="info-icon">ℹ️</span>
+          <span>
+            Anak &lt;2 tahun diukur berbaring (PB). Bila anak &ge;2 tahun diukur berbaring, tambahkan <strong>0,7 cm</strong>. Bila anak &lt;2 tahun diukur berdiri, kurangi <strong>0,7 cm</strong>.
+          </span>
+        </div>
+
+        <div class="error-msg" id="err2">⚠ Harap isi berat badan dan panjang/tinggi badan.</div>
+
+        <button class="btn btn-primary" onclick="hitung()">
+          🧮 Hitung Z-Score
+        </button>
+        <button class="btn btn-outline" onclick="goTo('input1')">← Kembali</button>
+      </div>
+
+      <!-- ══════════════════════════════════════ -->
+      <!-- SCREEN 4: HASIL                       -->
+      <!-- ══════════════════════════════════════ -->
+      <div class="screen" id="screen-result">
+        <div class="result-intro">
+          <div class="result-avatar">👶</div>
+          <div>
+            <div class="result-name" id="res-nama">—</div>
+            <div class="result-meta" id="res-meta">—</div>
+          </div>
+        </div>
+
+        <div class="result-grid">
+
+          <!-- BB/U -->
+          <div class="result-card">
+            <div class="rc-top">
+              <span class="rc-indicator">BB/U</span>
+              <span class="rc-zscore" id="zval-bbu">—</span>
+            </div>
+            <div class="rc-status-row">
+              <span class="rc-full-label">Berat Badan menurut Umur</span>
+              <span class="status-pill" id="pill-bbu">—</span>
+            </div>
+          </div>
+
+          <!-- PB(TB)/U -->
+          <div class="result-card">
+            <div class="rc-top">
+              <span class="rc-indicator" id="label-pbu-ind">PB/U</span>
+              <span class="rc-zscore" id="zval-pbu">—</span>
+            </div>
+            <div class="rc-status-row">
+              <span class="rc-full-label" id="label-pbu-full">Panjang Badan menurut Umur</span>
+              <span class="status-pill" id="pill-pbu">—</span>
+            </div>
+          </div>
+
+          <!-- BB/PB(TB) -->
+          <div class="result-card">
+            <div class="rc-top">
+              <span class="rc-indicator" id="label-bbpb-ind">BB/PB</span>
+              <span class="rc-zscore" id="zval-bbpb">—</span>
+            </div>
+            <div class="rc-status-row">
+              <span class="rc-full-label" id="label-bbpb-full">Berat Badan menurut Panjang Badan</span>
+              <span class="status-pill" id="pill-bbpb">—</span>
+            </div>
+          </div>
+
+          <!-- IMT/U -->
+          <div class="result-card">
+            <div class="rc-top">
+              <span class="rc-indicator">IMT/U</span>
+              <span class="rc-zscore" id="zval-imtu">—</span>
+            </div>
+            <div class="rc-status-row">
+              <span class="rc-full-label">Indeks Massa Tubuh menurut Umur</span>
+              <span class="status-pill" id="pill-imtu">—</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="disclaimer">
+          ⚕️ Hasil ini merupakan skrining awal berbasis standar WHO. Konsultasikan temuan ini dengan tenaga kesehatan untuk diagnosis dan tindak lanjut yang tepat.
+        </div>
+
+        <button class="btn btn-primary" onclick="ulangi()">
+          🔄 Periksa Anak Lain
+        </button>
+        <button class="btn btn-outline" onclick="cetakHasil()">🖨 Cetak Hasil</button>
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+
+  <div class="app-footer">GiziCheck · Kalkulator Z-Score WHO · Standar Pertumbuhan Anak</div>
+</div><!-- /app-wrapper -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let state = { usiaBulan: 0, usiaHari: 0 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id) && document.getElementById('screen-' + id).classList.add('active');
+  if (!document.getElementById('screen-' + id)) {
+    document.getElementById(id) && document.getElementById(id).classList.add('active');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USIA OTOMATIS
+// ─────────────────────────────────────────────────────────────────────────────
+function hitungUsia() {
+  const lahir = document.getElementById('tgl_lahir').value;
+  const periksa = document.getElementById('tgl_periksa').value;
+  const el = document.getElementById('usia-display');
+  if (!lahir || !periksa) return;
+  const d1 = new Date(lahir), d2 = new Date(periksa);
+  if (d2 <= d1) {
+    el.textContent = '⚠ Tanggal pemeriksaan harus setelah tanggal lahir';
+    el.className = 'age-display placeholder';
+    state.usiaBulan = 0; return;
+  }
+  const hari = Math.floor((d2 - d1) / 86400000);
+  const bulan = Math.floor(hari / 30.4375);
+  state.usiaHari = hari;
+  state.usiaBulan = bulan;
+  const th = Math.floor(bulan / 12), bl = bulan % 12;
+  let txt = '';
+  if (th > 0) txt += th + ' tahun ';
+  txt += bl + ' bulan (' + hari + ' hari)';
+  el.textContent = txt;
+  el.className = 'age-display';
+}
+
+function updateTBLabel() {
+  const berdiri = document.getElementById('posisi').value === 'berdiri';
+  document.getElementById('label-tb').textContent = berdiri ? 'Tinggi Badan (cm)' : 'Panjang Badan (cm)';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VALIDATION & NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+function nextStep1() {
+  const nama = document.getElementById('nama').value.trim();
+  const lahir = document.getElementById('tgl_lahir').value;
+  const periksa = document.getElementById('tgl_periksa').value;
+  const jk = document.getElementById('jk').value;
+  const err = document.getElementById('err1');
+  if (!nama || !lahir || !periksa || !jk || state.usiaBulan <= 0) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  document.getElementById('screen-input1').classList.remove('active');
+  document.getElementById('screen-input2').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHO REFERENCE DATA (BB/U, PB-TB/U, BB/PB-TB, IMT/U)
+// Sumber: WHO Child Growth Standards
+// Format: [bulan/cm, median, SD]
+// ─────────────────────────────────────────────────────────────────────────────
+const WHO_BBU = {
+  L: [[0,3.346,0.394],[1,4.470,0.514],[2,5.573,0.628],[3,6.376,0.697],[4,7.000,0.750],[5,7.510,0.799],[6,7.934,0.844],[7,8.297,0.882],[8,8.603,0.916],[9,8.869,0.943],[10,9.099,0.970],[11,9.303,0.993],[12,9.476,1.013],[13,9.648,1.035],[14,9.818,1.056],[15,9.990,1.078],[16,10.154,1.099],[17,10.313,1.120],[18,10.460,1.139],[19,10.600,1.157],[20,10.733,1.175],[21,10.860,1.192],[22,10.983,1.210],[23,11.105,1.229],[24,11.220,1.244],[25,11.335,1.261],[26,11.450,1.279],[27,11.561,1.295],[28,11.669,1.311],[29,11.775,1.327],[30,11.877,1.342],[31,11.978,1.358],[32,12.075,1.372],[33,12.170,1.387],[34,12.262,1.401],[35,12.352,1.415],[36,12.440,1.430],[37,12.526,1.443],[38,12.610,1.457],[39,12.692,1.470],[40,12.772,1.483],[41,12.851,1.496],[42,12.928,1.510],[43,13.004,1.523],[44,13.079,1.536],[45,13.152,1.548],[46,13.225,1.561],[47,13.297,1.574],[48,13.367,1.586],[49,13.437,1.599],[50,13.505,1.612],[51,13.573,1.624],[52,13.641,1.637],[53,13.709,1.650],[54,13.777,1.663],[55,13.846,1.676],[56,13.914,1.689],[57,13.983,1.703],[58,14.053,1.717],[59,14.124,1.732],[60,14.196,1.747]],
+  P: [[0,3.232,0.379],[1,4.187,0.476],[2,5.126,0.576],[3,5.826,0.636],[4,6.341,0.684],[5,6.777,0.726],[6,7.155,0.764],[7,7.483,0.797],[8,7.769,0.827],[9,8.019,0.855],[10,8.242,0.879],[11,8.441,0.900],[12,8.618,0.920],[13,8.795,0.941],[14,8.971,0.963],[15,9.146,0.984],[16,9.318,1.005],[17,9.488,1.026],[18,9.649,1.045],[19,9.804,1.065],[20,9.952,1.083],[21,10.094,1.100],[22,10.232,1.116],[23,10.366,1.133],[24,10.475,1.147],[25,10.586,1.162],[26,10.698,1.177],[27,10.808,1.193],[28,10.917,1.208],[29,11.025,1.223],[30,11.131,1.239],[31,11.237,1.254],[32,11.340,1.269],[33,11.442,1.285],[34,11.543,1.300],[35,11.643,1.315],[36,11.742,1.330],[37,11.840,1.345],[38,11.937,1.360],[39,12.033,1.375],[40,12.128,1.390],[41,12.222,1.405],[42,12.316,1.420],[43,12.408,1.434],[44,12.500,1.449],[45,12.592,1.464],[46,12.683,1.479],[47,12.773,1.494],[48,12.863,1.509],[49,12.952,1.524],[50,13.040,1.539],[51,13.128,1.554],[52,13.215,1.569],[53,13.302,1.584],[54,13.389,1.599],[55,13.476,1.614],[56,13.563,1.629],[57,13.650,1.644],[58,13.738,1.659],[59,13.826,1.674],[60,13.915,1.690]]
+};
+
+const WHO_PBU = {
+  L: [[0,49.9,1.889],[1,54.7,1.990],[2,58.4,2.060],[3,61.4,2.114],[4,63.9,2.159],[5,65.9,2.199],[6,67.6,2.227],[7,69.2,2.250],[8,70.6,2.276],[9,72.0,2.304],[10,73.3,2.331],[11,74.5,2.362],[12,75.7,2.386],[13,76.9,2.410],[14,78.0,2.440],[15,79.1,2.470],[16,80.2,2.500],[17,81.2,2.529],[18,82.3,2.556],[19,83.2,2.585],[20,84.2,2.614],[21,85.1,2.643],[22,86.0,2.671],[23,86.9,2.700],[24,87.8,2.727],[25,88.8,2.752],[26,89.6,2.778],[27,90.5,2.800],[28,91.4,2.825],[29,92.2,2.849],[30,93.0,2.872],[31,93.8,2.894],[32,94.6,2.913],[33,95.4,2.935],[34,96.1,2.956],[35,96.9,2.977],[36,97.6,2.996],[37,98.4,3.016],[38,99.1,3.035],[39,99.8,3.054],[40,100.5,3.073],[41,101.1,3.091],[42,101.8,3.110],[43,102.4,3.127],[44,103.1,3.145],[45,103.7,3.162],[46,104.4,3.180],[47,105.0,3.198],[48,105.6,3.216],[49,106.2,3.233],[50,106.8,3.251],[51,107.4,3.268],[52,108.0,3.284],[53,108.6,3.301],[54,109.2,3.318],[55,109.7,3.335],[56,110.3,3.352],[57,110.9,3.370],[58,111.4,3.386],[59,112.0,3.403],[60,112.5,3.421]],
+  P: [[0,49.1,1.857],[1,53.7,1.953],[2,57.1,2.028],[3,59.8,2.091],[4,62.1,2.145],[5,64.0,2.193],[6,65.7,2.225],[7,67.3,2.247],[8,68.7,2.270],[9,70.1,2.294],[10,71.5,2.323],[11,72.8,2.356],[12,74.0,2.383],[13,75.2,2.416],[14,76.4,2.449],[15,77.5,2.482],[16,78.6,2.516],[17,79.7,2.549],[18,80.7,2.581],[19,81.7,2.613],[20,82.7,2.645],[21,83.7,2.677],[22,84.6,2.709],[23,85.5,2.741],[24,86.4,2.773],[25,87.4,2.803],[26,88.3,2.833],[27,89.2,2.861],[28,90.0,2.890],[29,90.9,2.917],[30,91.7,2.943],[31,92.5,2.970],[32,93.3,2.997],[33,94.1,3.023],[34,94.9,3.048],[35,95.7,3.075],[36,96.4,3.101],[37,97.2,3.127],[38,97.9,3.152],[39,98.7,3.177],[40,99.4,3.202],[41,100.1,3.227],[42,100.8,3.252],[43,101.5,3.277],[44,102.2,3.302],[45,102.9,3.328],[46,103.6,3.353],[47,104.3,3.378],[48,105.0,3.403],[49,105.7,3.428],[50,106.4,3.454],[51,107.1,3.479],[52,107.8,3.504],[53,108.5,3.530],[54,109.2,3.555],[55,109.9,3.580],[56,110.6,3.605],[57,111.3,3.630],[58,112.0,3.655],[59,112.7,3.680],[60,113.4,3.705]]
+};
+
+// BB/PB reference (weight-for-length, laki-laki & perempuan, per 0.5 cm)
+const WHO_BBPB = {
+  L: [[45.0,2.441,0.271],[45.5,2.520,0.277],[46.0,2.601,0.284],[46.5,2.684,0.292],[47.0,2.769,0.300],[47.5,2.856,0.308],[48.0,2.945,0.317],[48.5,3.037,0.325],[49.0,3.130,0.334],[49.5,3.226,0.343],[50.0,3.324,0.352],[50.5,3.423,0.361],[51.0,3.524,0.370],[51.5,3.626,0.380],[52.0,3.730,0.389],[52.5,3.835,0.398],[53.0,3.941,0.408],[53.5,4.048,0.417],[54.0,4.156,0.427],[54.5,4.265,0.436],[55.0,4.375,0.446],[55.5,4.486,0.456],[56.0,4.597,0.465],[56.5,4.709,0.475],[57.0,4.822,0.485],[57.5,4.935,0.495],[58.0,5.048,0.504],[58.5,5.161,0.514],[59.0,5.275,0.524],[59.5,5.388,0.533],[60.0,5.501,0.543],[60.5,5.614,0.552],[61.0,5.725,0.562],[61.5,5.836,0.571],[62.0,5.945,0.580],[62.5,6.052,0.589],[63.0,6.158,0.598],[63.5,6.261,0.607],[64.0,6.362,0.616],[64.5,6.461,0.624],[65.0,6.558,0.632],[65.5,6.652,0.640],[66.0,6.744,0.648],[66.5,6.833,0.656],[67.0,6.921,0.663],[67.5,7.007,0.671],[68.0,7.090,0.678],[68.5,7.172,0.685],[69.0,7.252,0.693],[69.5,7.330,0.700],[70.0,7.406,0.707],[70.5,7.481,0.714],[71.0,7.554,0.721],[71.5,7.626,0.728],[72.0,7.697,0.735],[72.5,7.767,0.742],[73.0,7.836,0.749],[73.5,7.905,0.756],[74.0,7.974,0.763],[74.5,8.042,0.770],[75.0,8.111,0.777],[75.5,8.180,0.784],[76.0,8.249,0.791],[76.5,8.318,0.798],[77.0,8.387,0.806],[77.5,8.456,0.813],[78.0,8.525,0.820],[78.5,8.594,0.827],[79.0,8.664,0.835],[79.5,8.734,0.842],[80.0,8.805,0.849],[80.5,8.876,0.857],[81.0,8.948,0.864],[81.5,9.020,0.872],[82.0,9.092,0.879],[82.5,9.165,0.887],[83.0,9.238,0.894],[83.5,9.312,0.902],[84.0,9.387,0.910],[84.5,9.462,0.918],[85.0,9.538,0.926],[85.5,9.615,0.934],[86.0,9.694,0.942],[86.5,9.773,0.951],[87.0,9.853,0.959],[87.5,9.935,0.968],[88.0,10.019,0.977],[88.5,10.103,0.986],[89.0,10.189,0.995],[89.5,10.276,1.004],[90.0,10.365,1.013],[90.5,10.454,1.022],[91.0,10.545,1.031],[91.5,10.638,1.041],[92.0,10.732,1.050],[92.5,10.827,1.060],[93.0,10.924,1.070],[93.5,11.021,1.080],[94.0,11.120,1.090],[94.5,11.220,1.100],[95.0,11.320,1.110],[95.5,11.421,1.120],[96.0,11.524,1.131],[96.5,11.627,1.141],[97.0,11.732,1.152],[97.5,11.838,1.163],[98.0,11.946,1.174],[98.5,12.055,1.185],[99.0,12.165,1.196],[99.5,12.277,1.208],[100.0,12.389,1.219],[100.5,12.503,1.231],[101.0,12.618,1.243],[101.5,12.734,1.255],[102.0,12.851,1.267],[102.5,12.969,1.280],[103.0,13.088,1.293],[103.5,13.209,1.306],[104.0,13.331,1.319],[104.5,13.454,1.333],[105.0,13.579,1.347],[105.5,13.706,1.361],[106.0,13.834,1.375],[106.5,13.964,1.390],[107.0,14.096,1.405],[107.5,14.230,1.420],[108.0,14.366,1.436],[108.5,14.503,1.452],[109.0,14.643,1.468],[109.5,14.784,1.485],[110.0,14.927,1.503]],
+  P: [[45.0,2.348,0.260],[45.5,2.426,0.267],[46.0,2.507,0.274],[46.5,2.590,0.282],[47.0,2.676,0.290],[47.5,2.763,0.298],[48.0,2.853,0.307],[48.5,2.945,0.315],[49.0,3.038,0.324],[49.5,3.134,0.333],[50.0,3.232,0.342],[50.5,3.332,0.351],[51.0,3.434,0.360],[51.5,3.537,0.369],[52.0,3.641,0.378],[52.5,3.747,0.387],[53.0,3.854,0.396],[53.5,3.961,0.405],[54.0,4.070,0.414],[54.5,4.180,0.423],[55.0,4.291,0.432],[55.5,4.403,0.441],[56.0,4.516,0.450],[56.5,4.629,0.459],[57.0,4.742,0.468],[57.5,4.856,0.477],[58.0,4.970,0.486],[58.5,5.084,0.495],[59.0,5.198,0.504],[59.5,5.312,0.513],[60.0,5.426,0.522],[60.5,5.539,0.531],[61.0,5.652,0.540],[61.5,5.763,0.548],[62.0,5.874,0.557],[62.5,5.982,0.565],[63.0,6.089,0.573],[63.5,6.194,0.581],[64.0,6.296,0.589],[64.5,6.396,0.597],[65.0,6.493,0.604],[65.5,6.588,0.612],[66.0,6.680,0.619],[66.5,6.770,0.626],[67.0,6.857,0.633],[67.5,6.941,0.640],[68.0,7.023,0.647],[68.5,7.104,0.653],[69.0,7.183,0.660],[69.5,7.260,0.666],[70.0,7.335,0.673],[70.5,7.409,0.679],[71.0,7.481,0.686],[71.5,7.552,0.692],[72.0,7.622,0.699],[72.5,7.691,0.705],[73.0,7.759,0.711],[73.5,7.827,0.717],[74.0,7.895,0.724],[74.5,7.963,0.730],[75.0,8.031,0.736],[75.5,8.100,0.743],[76.0,8.169,0.749],[76.5,8.239,0.756],[77.0,8.310,0.762],[77.5,8.381,0.769],[78.0,8.452,0.776],[78.5,8.524,0.783],[79.0,8.597,0.790],[79.5,8.671,0.797],[80.0,8.746,0.804],[80.5,8.821,0.811],[81.0,8.898,0.818],[81.5,8.976,0.826],[82.0,9.055,0.833],[82.5,9.135,0.841],[83.0,9.215,0.849],[83.5,9.297,0.857],[84.0,9.379,0.865],[84.5,9.463,0.873],[85.0,9.548,0.882],[85.5,9.634,0.890],[86.0,9.721,0.899],[86.5,9.810,0.908],[87.0,9.899,0.917],[87.5,9.989,0.926],[88.0,10.081,0.936],[88.5,10.173,0.945],[89.0,10.267,0.955],[89.5,10.362,0.965],[90.0,10.458,0.975],[90.5,10.555,0.985],[91.0,10.654,0.996],[91.5,10.753,1.006],[92.0,10.854,1.017],[92.5,10.956,1.028],[93.0,11.060,1.039],[93.5,11.165,1.050],[94.0,11.272,1.062],[94.5,11.380,1.073],[95.0,11.490,1.085],[95.5,11.601,1.097],[96.0,11.714,1.109],[96.5,11.829,1.121],[97.0,11.945,1.133],[97.5,12.062,1.146],[98.0,12.182,1.158],[98.5,12.302,1.171],[99.0,12.424,1.184],[99.5,12.548,1.197],[100.0,12.673,1.211],[100.5,12.800,1.224],[101.0,12.929,1.238],[101.5,13.059,1.252],[102.0,13.191,1.267],[102.5,13.324,1.281],[103.0,13.459,1.296],[103.5,13.595,1.311],[104.0,13.733,1.327],[104.5,13.873,1.342],[105.0,14.015,1.358],[105.5,14.159,1.374],[106.0,14.304,1.390],[106.5,14.451,1.407],[107.0,14.600,1.424],[107.5,14.751,1.441],[108.0,14.904,1.459],[108.5,15.060,1.477],[109.0,15.218,1.495],[109.5,15.378,1.514],[110.0,15.540,1.533]]
+};
+
+// IMT/U (BMI-for-age) WHO — median & SD per bulan
+const WHO_IMTU = {
+  L: [[0,13.34,1.36],[1,14.94,1.49],[2,16.36,1.53],[3,17.00,1.52],[4,17.23,1.52],[5,17.25,1.51],[6,17.17,1.51],[7,17.04,1.51],[8,16.90,1.51],[9,16.74,1.51],[10,16.60,1.51],[11,16.46,1.51],[12,16.35,1.51],[13,16.24,1.52],[14,16.14,1.52],[15,16.05,1.53],[16,15.97,1.53],[17,15.90,1.54],[18,15.83,1.55],[19,15.77,1.55],[20,15.72,1.56],[21,15.67,1.57],[22,15.62,1.58],[23,15.58,1.59],[24,15.55,1.60],[25,15.51,1.61],[26,15.48,1.62],[27,15.45,1.63],[28,15.42,1.64],[29,15.40,1.65],[30,15.37,1.66],[31,15.35,1.67],[32,15.33,1.68],[33,15.31,1.69],[34,15.29,1.70],[35,15.28,1.71],[36,15.26,1.72],[37,15.25,1.73],[38,15.23,1.74],[39,15.22,1.75],[40,15.21,1.76],[41,15.20,1.77],[42,15.19,1.78],[43,15.18,1.79],[44,15.17,1.80],[45,15.17,1.81],[46,15.16,1.82],[47,15.16,1.83],[48,15.15,1.84],[49,15.15,1.85],[50,15.15,1.86],[51,15.15,1.87],[52,15.14,1.88],[53,15.14,1.89],[54,15.14,1.90],[55,15.14,1.92],[56,15.14,1.93],[57,15.15,1.94],[58,15.15,1.95],[59,15.15,1.96],[60,15.15,1.97]],
+  P: [[0,13.34,1.36],[1,14.60,1.46],[2,15.88,1.49],[3,16.46,1.49],[4,16.69,1.49],[5,16.73,1.49],[6,16.64,1.48],[7,16.49,1.48],[8,16.33,1.48],[9,16.17,1.48],[10,16.01,1.48],[11,15.86,1.48],[12,15.73,1.48],[13,15.62,1.49],[14,15.52,1.49],[15,15.44,1.50],[16,15.36,1.50],[17,15.29,1.51],[18,15.22,1.52],[19,15.17,1.52],[20,15.11,1.53],[21,15.07,1.54],[22,15.03,1.55],[23,15.00,1.56],[24,14.96,1.57],[25,14.93,1.58],[26,14.90,1.59],[27,14.88,1.60],[28,14.85,1.61],[29,14.83,1.62],[30,14.81,1.63],[31,14.79,1.64],[32,14.77,1.65],[33,14.76,1.66],[34,14.74,1.68],[35,14.73,1.69],[36,14.72,1.70],[37,14.71,1.71],[38,14.70,1.72],[39,14.69,1.73],[40,14.68,1.74],[41,14.67,1.76],[42,14.67,1.77],[43,14.66,1.78],[44,14.66,1.79],[45,14.66,1.80],[46,14.65,1.82],[47,14.65,1.83],[48,14.65,1.84],[49,14.65,1.85],[50,14.65,1.87],[51,14.66,1.88],[52,14.66,1.89],[53,14.66,1.91],[54,14.67,1.92],[55,14.67,1.93],[56,14.68,1.95],[57,14.68,1.96],[58,14.69,1.98],[59,14.70,1.99],[60,14.71,2.01]]
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOOKUP HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function getByAge(table, gender, bulan) {
+  const arr = table[gender];
+  const row = arr.find(r => r[0] === bulan);
+  return row ? { median: row[1], sd: row[2] } : null;
+}
+
+function getByLength(gender, tbCm) {
+  const rounded = Math.round(tbCm * 2) / 2;
+  const arr = WHO_BBPB[gender];
+  const row = arr.find(r => Math.abs(r[0] - rounded) < 0.01);
+  return row ? { median: row[1], sd: row[2] } : null;
+}
+
+function zCalc(val, ref) {
+  if (!ref) return null;
+  return (val - ref.median) / ref.sd;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATUS INTERPRETATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+function statusBBU(z) {
+  if (z < -3) return { text: 'BB sangat kurang (severely underweight)', cls: 'pill-red' };
+  if (z < -2) return { text: 'BB kurang (underweight)', cls: 'pill-red' };
+  if (z <= 1)  return { text: 'BB normal', cls: 'pill-green' };
+  return { text: 'Risiko BB lebih', cls: 'pill-yellow' };
+}
+function statusPBU(z) {
+  if (z < -3) return { text: 'Sangat pendek (severely stunted)', cls: 'pill-red' };
+  if (z < -2) return { text: 'Pendek (stunted)', cls: 'pill-red' };
+  if (z <= 3)  return { text: 'Normal', cls: 'pill-green' };
+  return { text: 'Tinggi', cls: 'pill-green' };
+}
+function statusBBPB(z) {
+  if (z < -3) return { text: 'Gizi buruk (severely wasted)', cls: 'pill-red' };
+  if (z < -2) return { text: 'Gizi kurang (wasted)', cls: 'pill-red' };
+  if (z <= 1)  return { text: 'Gizi baik (normal)', cls: 'pill-green' };
+  if (z <= 2)  return { text: 'Berisiko gizi lebih (possible risk of overweight)', cls: 'pill-yellow' };
+  if (z <= 3)  return { text: 'Gizi lebih (overweight)', cls: 'pill-yellow' };
+  return { text: 'Obesitas (obese)', cls: 'pill-yellow' };
+}
+function statusIMTU(z) { return statusBBPB(z); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HITUNG Z-SCORE
+// ─────────────────────────────────────────────────────────────────────────────
+function hitung() {
+  const bb = parseFloat(document.getElementById('bb').value);
+  const tbInput = parseFloat(document.getElementById('tb').value);
+  const err = document.getElementById('err2');
+  if (isNaN(bb) || isNaN(tbInput) || bb <= 0 || tbInput <= 0) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+
+  const jk = document.getElementById('jk').value; // L/P
+  const posisi = document.getElementById('posisi').value;
+  const bulan = state.usiaBulan;
+  const isBerdiri = posisi === 'berdiri';
+
+  // Koreksi posisi pengukuran
+  let tb = tbInput;
+  if (isBerdiri && bulan < 24) tb += 0.7;   // diukur berdiri tapi <2 th → kurangi 0.7 saat konversi ke PB
+  // NOTE: koreksi WHO: bila <2th diukur berdiri, tambah 0.7 ke PB = artinya kita pakai PB = TB + 0.7
+  // Bila ≥2th diukur berbaring, kurangi 0.7 → TB = PB - 0.7
+  if (!isBerdiri && bulan >= 24) tb -= 0.7;
+
+  const imt = bb / Math.pow(tb / 100, 2);
+
+  const refBBU  = getByAge(WHO_BBU, jk, bulan);
+  const refPBU  = getByAge(WHO_PBU, jk, bulan);
+  const refBBPB = getByLength(jk, tb);
+  const refIMTU = getByAge(WHO_IMTU, jk, bulan);
+
+  const zBBU  = zCalc(bb, refBBU);
+  const zPBU  = zCalc(tb, refPBU);
+  const zBBPB = zCalc(bb, refBBPB);
+  const zIMTU = zCalc(imt, refIMTU);
+
+  // Update labels
+  const label = isBerdiri && bulan >= 24 ? 'TB' : 'PB';
+  document.getElementById('label-pbu-ind').textContent  = label + '/U';
+  document.getElementById('label-pbu-full').textContent = (isBerdiri && bulan >= 24 ? 'Tinggi Badan' : 'Panjang Badan') + ' menurut Umur';
+  document.getElementById('label-bbpb-ind').textContent  = 'BB/' + label;
+  document.getElementById('label-bbpb-full').textContent = 'Berat Badan menurut ' + (isBerdiri && bulan >= 24 ? 'Tinggi Badan' : 'Panjang Badan');
+
+  // Nama & meta
+  const nama = document.getElementById('nama').value;
+  const genderLabel = jk === 'L' ? 'Laki-laki' : 'Perempuan';
+  const th = Math.floor(bulan / 12), bl = bulan % 12;
+  const usiaStr = (th > 0 ? th + ' tahun ' : '') + bl + ' bulan';
+
+  document.getElementById('res-nama').textContent = nama;
+  document.getElementById('res-meta').textContent = genderLabel + ' · ' + usiaStr + ' · BB: ' + bb + ' kg · ' + label + ': ' + tbInput + ' cm';
+
+  // Render tiap kartu
+  renderResult('zval-bbu', 'pill-bbu', zBBU, statusBBU);
+  renderResult('zval-pbu', 'pill-pbu', zPBU, statusPBU);
+  renderResult('zval-bbpb', 'pill-bbpb', zBBPB, statusBBPB);
+  renderResult('zval-imtu', 'pill-imtu', zIMTU, statusIMTU);
+
+  document.getElementById('screen-input2').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderResult(zId, pillId, z, statusFn) {
+  const zEl = document.getElementById(zId);
+  const pEl = document.getElementById(pillId);
+  if (z === null) {
+    zEl.textContent = '—';
+    pEl.textContent = 'Data di luar rentang tabel';
+    pEl.className = 'status-pill pill-yellow';
+    return;
+  }
+  zEl.textContent = (z >= 0 ? '+' : '') + z.toFixed(2);
+  const s = statusFn(z);
+  pEl.textContent = s.text;
+  pEl.className = 'status-pill ' + s.cls;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESET
+// ─────────────────────────────────────────────────────────────────────────────
+function ulangi() {
+  ['nama','tgl_lahir','bb','tb'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tgl_periksa').value = today();
+  document.getElementById('jk').value = '';
+  document.getElementById('posisi').value = 'berbaring';
+  document.getElementById('usia-display').textContent = 'Isi tanggal lahir dan pemeriksaan...';
+  document.getElementById('usia-display').className = 'age-display placeholder';
+  updateTBLabel();
+  state.usiaBulan = 0; state.usiaHari = 0;
+  document.getElementById('screen-result').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cetakHasil() { window.print(); }
+
+function today() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+// Set default tanggal pemeriksaan = hari ini
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('tgl_periksa').value = today();
+});
+</script>
+
+<!-- PRINT STYLE -->
+<style>
+@media print {
+  body::before, body::after { display: none; }
+  .btn, .app-footer { display: none !important; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+  .card-header { background: #1d4ed8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</body>
+</html>
